@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>App Configuration</title>
+</head>
+<body>
+    <h2>Edit DICOM Connection Config</h2>
+    <form method="post">
+        <label>ORTHANC AE Title:</label><br>
+        <input type="text" name="ORTHANC_AE_TITLE" value="{{ config['ORTHANC_AE_TITLE'] }}"><br><br>
+
+        <label>ORTHANC IP:</label><br>
+        <input type="text" name="ORTHANC_IP" value="{{ config['ORTHANC_IP'] }}"><br><br>
+
+        <label>ORTHANC Port:</label><br>
+        <input type="number" name="ORTHANC_PORT" value="{{ config['ORTHANC_PORT'] }}"><br><br>
+
+        <label>Local AE Title:</label><br>
+        <input type="text" name="LOCAL_AE_TITLE" value="{{ config['LOCAL_AE_TITLE'] }}"><br><br>
+
+        <button type="submit">Save</button>
+    </form>
+
+    <br>
+    <a href="/">← Back to Home</a>
+</body>
+</html>
