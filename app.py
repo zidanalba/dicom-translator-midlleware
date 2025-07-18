@@ -1,12 +1,17 @@
-from flask import Flask, request, Response, render_template, jsonify, redirect, url_for
+from flask import Flask, request, Response, render_template, jsonify, redirect, url_for, make_response
 from lxml import etree
 from pynetdicom import AE
-from pynetdicom.sop_class import ModalityWorklistInformationFind
-from pydicom.dataset import Dataset
+from pynetdicom.sop_class import ModalityWorklistInformationFind, CTImageStorage
+from pydicom.dataset import Dataset, FileDataset
+from pydicom.uid import ExplicitVRLittleEndian, generate_uid, SecondaryCaptureImageStorage
+import pydicom
+from pydicom import dcmread
 from xml.etree.ElementTree import Element, SubElement, tostring
 import logging
 import json
 import os
+import datetime
+import requests
 
 app = Flask(__name__)
 
@@ -26,6 +31,9 @@ ORTHANC_AE_TITLE = config["ORTHANC_AE_TITLE"]
 ORTHANC_IP = config["ORTHANC_IP"]
 ORTHANC_PORT = config["ORTHANC_PORT"]
 LOCAL_AE_TITLE = config["LOCAL_AE_TITLE"]
+
+UPLOAD_FOLDER = "./results"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -74,6 +82,44 @@ def dicom_cfind(patient_id):
 
     assoc.release()
     return result
+
+def xml_response(code, message):
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<response>
+    <code>{code}</code>
+    <message>{message}</message>
+</response>"""
+    response = make_response(xml)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
+def send_dicom_to_orthanc(dicom_path, dest_ae='ORTHANC', dest_host='127.0.0.1', dest_port=4242):
+    # Create Application Entity
+    ae = AE(ae_title='FLASK')
+
+    # Add requested presentation context (storage SCP)
+    ae.add_requested_context(CTImageStorage)
+
+    # Read the DICOM file
+    ds = dcmread(dicom_path)
+
+    ae.add_requested_context(ds.SOPClassUID)
+
+    # Associate with Orthanc
+    assoc = ae.associate(dest_host, dest_port, ae_title=dest_ae)
+
+    if assoc.is_established:
+        print("Association established, sending DICOM file...")
+        status = assoc.send_c_store(ds)
+
+        if status:
+            print(f"C-STORE request status: 0x{status.Status:04x}")
+        else:
+            print("Connection timed out or was aborted.")
+
+        assoc.release()
+    else:
+        print("Could not establish association with Orthanc.")
 
 def dicom_to_xml_response(ds: Dataset) -> str:
     root = Element('root')
@@ -140,9 +186,46 @@ def query_worklist():
             status=500
         )
 
-# @app.route("/receive", methods=["POST"])
-# def receive_and_send_result():
-#     app.logger.info(f"Incoming data: {request.data}")
+@app.route("/receive", methods=["POST"])
+def receive_octet_stream():
+    try:
+        # Read filename from custom header
+        filename = request.headers.get('Filename')
+        if not filename:
+            return xml_response(-1, 'Filename header is missing')
+
+        # Get binary data from body
+        file_content = request.get_data()
+        if not file_content:
+            return xml_response(-1, 'Empty file content')
+
+        # Save file
+        safe_filename = os.path.basename(filename)
+        save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+
+        with open(save_path, 'wb') as f:
+            f.write(file_content)
+
+        print(f"Received raw file: {safe_filename}")
+        print(f"Saved to: {save_path}")
+
+        send_dicom_to_orthanc(save_path)
+
+        ds = pydicom.dcmread(save_path)
+        if hasattr(ds, "EncapsulatedDocument"):
+            pdf_bytes = ds.EncapsulatedDocument
+            pdf_filename = safe_filename.replace('.dcm', '.pdf')
+            pdf_path = os.path.join(UPLOAD_FOLDER, pdf_filename)
+            with open(pdf_path, "wb") as pdf_file:
+                pdf_file.write(pdf_bytes)
+            print(f"Extracted PDF saved to: {pdf_path}")
+        else:
+            print("No EncapsulatedDocument tag found in DICOM.")
+
+        return xml_response(1, 'Upload successful')
+    except Exception as e:
+        print(f"Upload Error: {e}")
+        return xml_response(-1, 'Server error')
 
 @app.route("/config", methods=["GET", "POST"])
 def edit_config():
