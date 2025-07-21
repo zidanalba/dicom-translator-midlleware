@@ -31,7 +31,8 @@ ORTHANC_AE_TITLE = config["ORTHANC_AE_TITLE"]
 ORTHANC_IP = config["ORTHANC_IP"]
 ORTHANC_PORT = config["ORTHANC_PORT"]
 LOCAL_AE_TITLE = config["LOCAL_AE_TITLE"]
-
+WORKLIST_FOLDER = r"C:\Orthanc\Worklists"
+HIS_API_URL = "http://localhost:8000/api/ecg-result"
 UPLOAD_FOLDER = "./results"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -85,10 +86,12 @@ def dicom_cfind(patient_id):
 
 def xml_response(code, message):
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<response>
-    <code>{code}</code>
-    <message>{message}</message>
-</response>"""
+<root>
+    <result>
+        <Code>{code}</Code>
+        <Message>{message}</Message>
+    </result>
+</root>"""
     response = make_response(xml)
     response.headers['Content-Type'] = 'application/xml'
     return response
@@ -159,6 +162,58 @@ def dicom_to_xml_response(ds: Dataset) -> str:
     # Hasil XML
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(root, encoding='unicode')
 
+def get_worklists_from_folder():
+    worklists = []
+    for filename in os.listdir(WORKLIST_FOLDER):
+        if filename.lower().endswith('.wl'):
+            try:
+                filepath = os.path.join(WORKLIST_FOLDER, filename)
+                ds = pydicom.dcmread(filepath)
+
+                info = {
+                    "filename": filename,
+                    "PatientName": getattr(ds, "PatientName", "Unknown"),
+                    "PatientID": getattr(ds, "PatientID", "Unknown"),
+                    "Modality": getattr(ds, "Modality", "Unknown"),
+                    "ScheduledDate": getattr(ds, "ScheduledProcedureStepStartDate", "N/A"),
+                    "ScheduledTime": getattr(ds, "ScheduledProcedureStepStartTime", "N/A"),
+                    "StudyDescription": getattr(ds, "StudyDescription", "N/A"),
+                }
+                worklists.append(info)
+            except Exception as e:
+                print(f"Failed to parse {filename}: {e}")
+    return worklists
+
+def send_data_to_his(ds, pdf_path=None):
+    try:
+        data = {
+            "patient_id": getattr(ds, "PatientID", ""),
+            "patient_name": str(getattr(ds, "PatientName", "")),
+            "study_description": getattr(ds, "StudyDescription", ""),
+            "modality": getattr(ds, "Modality", ""),
+            "accession_number": getattr(ds, "AccessionNumber", ""),
+        }
+
+        print("data", data)
+
+        files = {}
+        if pdf_path and os.path.exists(pdf_path):
+            files["pdf"] = open(pdf_path, "rb")
+
+        # headers = {
+        #     "Authorization": f"Bearer {HIS_API_KEY}"
+        # }
+
+        response = requests.post(HIS_API_URL, data=data, files=files)
+
+        if response.status_code == 200:
+            print("Successfully sent data to HIS")
+        else:
+            print(f"Failed to send to HIS: {response.status_code}, {response.text}")
+
+    except Exception as e:
+        print(f"Error sending to HIS: {e}")
+
 @app.route("/query", methods=["POST"])
 def query_worklist():
     try:
@@ -212,6 +267,7 @@ def receive_octet_stream():
         send_dicom_to_orthanc(save_path)
 
         ds = pydicom.dcmread(save_path)
+        pdf_path = None
         if hasattr(ds, "EncapsulatedDocument"):
             pdf_bytes = ds.EncapsulatedDocument
             pdf_filename = safe_filename.replace('.dcm', '.pdf')
@@ -221,6 +277,8 @@ def receive_octet_stream():
             print(f"Extracted PDF saved to: {pdf_path}")
         else:
             print("No EncapsulatedDocument tag found in DICOM.")
+
+        send_data_to_his(ds, pdf_path)
 
         return xml_response(1, 'Upload successful')
     except Exception as e:
@@ -241,6 +299,70 @@ def edit_config():
     
     current_config = load_config()
     return render_template("config.html", config=current_config)
+
+@app.route("/worklists", methods=["GET"])
+def view_worklists():
+    worklist = get_worklists_from_folder()
+    return render_template("worklists.html", worklists = worklist)
+
+@app.route("/insert-worklist", methods=["POST"])
+def insert_worklist():
+    print("=== Received a request ===")
+    try:
+        # Get JSON data sent from Laravel
+        data = request.get_json()
+
+        # Extract and print fields (for debug)
+        patient_id = str(data.get('id'))
+        name = data.get('name')
+        gender = data.get('gender')
+        age = str(data.get('age'))
+
+        print(f"Received worklist: ID={patient_id}, Name={name}, Gender={gender}, Age={age}")
+
+        os.makedirs(WORKLIST_FOLDER, exist_ok=True)
+
+        filename = f"worklist_{patient_id}.wl"
+        filepath = os.path.join(WORKLIST_FOLDER, filename)
+
+        file_meta = Dataset()
+        file_meta.MediaStorageSOPClassUID = ModalityWorklistInformationFind
+        file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+        file_meta.ImplementationClassUID = pydicom.uid.generate_uid()
+
+        ds = FileDataset(filepath, {}, file_meta=file_meta, preamble=b"\0" * 128)
+        ds.is_little_endian = True
+        ds.is_implicit_VR = True
+
+        ds.PatientName = name.replace(" ", "^")
+        ds.PatientSex = gender[0].upper()
+        ds.PatientAge = age
+        ds.PatientID = patient_id
+        ds.AccessionNumber = "ACC" + patient_id.zfill(5)
+        ds.StudyInstanceUID = pydicom.uid.generate_uid()
+
+        sps = Dataset()
+        sps.ScheduledStationAETitle = "ORTHANC"
+        sps.ScheduledProcedureStepStartDate = datetime.date.today().strftime("%Y%m%d")
+        sps.ScheduledProcedureStepStartTime = "120000"
+        sps.Modality = "ECG"  # Change to MR, CT, etc., if needed
+        sps.ScheduledPerformingPhysicianName = "Dr. House"
+        sps.ScheduledProcedureStepDescription = "ECG Exam"
+        sps.ScheduledStationName = "ECG1"
+        sps.ScheduledProcedureStepID = f"SPSID{patient_id}"
+
+        ds.ScheduledProcedureStepSequence = [sps]
+
+        ds.RequestedProcedureID = f"RPID{patient_id}"
+        ds.RequestedProcedureDescription = "ECG Worklist"
+
+        ds.save_as(filepath, write_like_original=False)
+
+        print(f"[INFO] Worklist file saved to {filepath}")
+        return jsonify({"success": True, "message": "Worklist saved."}), 200
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

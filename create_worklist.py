@@ -3,7 +3,7 @@ from pynetdicom.sop_class import ModalityWorklistInformationFind
 import pydicom.uid
 import datetime
 
-filename = "wklist_2.wl"
+filename = "wklist_4.wl"
 
 # File meta info
 file_meta = Dataset()
@@ -17,12 +17,12 @@ ds.is_little_endian = True
 ds.is_implicit_VR = True
 
 # Add patient info
-ds.PatientName = "Melly Goesdur"
-ds.PatientSex = "F"
-ds.PatientAge = "061Y"
+ds.PatientName = "Iyas Lawrence"
+ds.PatientSex = "M"
+ds.PatientAge = "029Y"
 # ds.Pacemaker = "2"
-ds.PatientID = "3"
-ds.AccessionNumber = "123457"
+ds.PatientID = "4"
+ds.AccessionNumber = "123458"
 ds.StudyInstanceUID = pydicom.uid.generate_uid()
 
 # Required: Scheduled Procedure Step Sequence

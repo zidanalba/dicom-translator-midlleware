@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DICOM Worklists</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 0.5rem;
+        }
+        th {
+            background-color: #f3f3f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Available Worklist Files</h1>
+    {% if worklists %}
+    <table>
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Patient Name</th>
+                <th>Patient ID</th>
+                <th>Modality</th>
+                <th>Scheduled Date</th>
+                <th>Scheduled Time</th>
+                <th>Study Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for w in worklists %}
+            <tr>
+                <td>{{ w.filename }}</td>
+                <td>{{ w.PatientName }}</td>
+                <td>{{ w.PatientID }}</td>
+                <td>{{ w.Modality }}</td>
+                <td>{{ w.ScheduledDate }}</td>
+                <td>{{ w.ScheduledTime }}</td>
+                <td>{{ w.StudyDescription }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No worklists found in the folder.</p>
+    {% endif %}
+</body>
+</html>
