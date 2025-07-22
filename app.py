@@ -31,10 +31,12 @@ ORTHANC_AE_TITLE = config["ORTHANC_AE_TITLE"]
 ORTHANC_IP = config["ORTHANC_IP"]
 ORTHANC_PORT = config["ORTHANC_PORT"]
 LOCAL_AE_TITLE = config["LOCAL_AE_TITLE"]
-WORKLIST_FOLDER = r"C:\Orthanc\Worklists"
-HIS_API_URL = "http://localhost:8000/api/ecg-result"
-UPLOAD_FOLDER = "./results"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+WORKLIST_FOLDER = config["ORTHANC_WORKLIST_FOLDER"]
+HIS_API_URL = config["HIS_API_URL"]
+UPLOAD_FOLDER = config["RESULT_FOLDER"]
+SEND_TO_API = config["SEND_TO_API"]
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
 
 logging.basicConfig(level=logging.INFO)
 
@@ -96,7 +98,7 @@ def xml_response(code, message):
     response.headers['Content-Type'] = 'application/xml'
     return response
 
-def send_dicom_to_orthanc(dicom_path, dest_ae='ORTHANC', dest_host='127.0.0.1', dest_port=4242):
+def send_dicom_to_orthanc(dicom_path, dest_ae=ORTHANC_AE_TITLE, dest_host=ORTHANC_IP, dest_port=ORTHANC_PORT):
     # Create Application Entity
     ae = AE(ae_title='FLASK')
 
@@ -278,7 +280,8 @@ def receive_octet_stream():
         else:
             print("No EncapsulatedDocument tag found in DICOM.")
 
-        send_data_to_his(ds, pdf_path)
+        if SEND_TO_API:
+            send_data_to_his(ds, pdf_path)
 
         return xml_response(1, 'Upload successful')
     except Exception as e:
@@ -293,6 +296,10 @@ def edit_config():
             "ORTHANC_IP": request.form["ORTHANC_IP"],
             "ORTHANC_PORT": int(request.form["ORTHANC_PORT"]),
             "LOCAL_AE_TITLE": request.form["LOCAL_AE_TITLE"],
+            "ORTHANC_WORKLIST_FOLDER": request.form["ORTHANC_WORKLIST_FOLDER"],
+            "SEND_TO_API": request.form.get("SEND_TO_API") == "true",
+            "HIS_API_URL": request.form["HIS_API_URL"],
+            "RESULT_FOLDER": request.form["RESULT_FOLDER"],
         }
         save_config(updated_config)
         return redirect(url_for('edit_config'))
@@ -363,6 +370,11 @@ def insert_worklist():
     except Exception as e:
         print(f"[ERROR] {e}")
         return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/")
+def home():
+    return "Middleware is running!", 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

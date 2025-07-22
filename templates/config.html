@@ -7,16 +7,29 @@
     <h2>Edit DICOM Connection Config</h2>
     <form method="post">
         <label>ORTHANC AE Title:</label><br>
-        <input type="text" name="ORTHANC_AE_TITLE" value="{{ config['ORTHANC_AE_TITLE'] }}"><br><br>
+        <input type="text" name="ORTHANC_AE_TITLE" value="{{ config['ORTHANC_AE_TITLE'] }}" required><br><br>
 
         <label>ORTHANC IP:</label><br>
-        <input type="text" name="ORTHANC_IP" value="{{ config['ORTHANC_IP'] }}"><br><br>
+        <input type="text" name="ORTHANC_IP" value="{{ config['ORTHANC_IP'] }}" required><br><br>
 
         <label>ORTHANC Port:</label><br>
-        <input type="number" name="ORTHANC_PORT" value="{{ config['ORTHANC_PORT'] }}"><br><br>
+        <input type="number" name="ORTHANC_PORT" value="{{ config['ORTHANC_PORT'] }}" required><br><br>
 
         <label>Local AE Title:</label><br>
-        <input type="text" name="LOCAL_AE_TITLE" value="{{ config['LOCAL_AE_TITLE'] }}"><br><br>
+        <input type="text" name="LOCAL_AE_TITLE" value="{{ config['LOCAL_AE_TITLE'] }}" required><br><br>
+
+        <label>ORTHANC WORKLIST FOLDER:</label><br>
+        <input type="text" name="ORTHANC_WORKLIST_FOLDER" value="{{ config['ORTHANC_WORKLIST_FOLDER'] }}" required><br><br>
+
+        <label>SEND TO API:</label><br>
+        <input type="checkbox" name="SEND_TO_API" value="true" {% if config['SEND_TO_API'] %}checked{% endif %} required><br><br>
+
+
+        <label>HIS API URL:</label><br>
+        <input type="text" name="HIS_API_URL" value="{{ config['HIS_API_URL'] }}"><br><br>
+
+        <label>Local Result Folder:</label><br>
+        <input type="text" name="RESULT_FOLDER" value="{{ config['RESULT_FOLDER'] }}" required><br><br>
 
         <button type="submit">Save</button>
     </form>
