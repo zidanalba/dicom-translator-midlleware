@@ -9,7 +9,7 @@ A lightweight Flask-based middleware to receive ECG result files from medical de
 - Accepts HTTP POST of ECG results (PDF/XML)
 - Converts and forwards results as DICOM Secondary Capture (SC)
 - Sends to configurable PACS server (Orthanc, etc.)
-- Configurable via `config.json`
+- Configurable via `config.json` and `http://localhost:8080/config`
 
 ---
 
