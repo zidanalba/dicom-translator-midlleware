@@ -1,6 +1,6 @@
 # DICOM Translator Middleware
 
-A lightweight Flask-based middleware to receive ECG result files from medical devices and forward them to a DICOM PACS server (e.g., Orthanc) using the DICOM protocol.
+A lightweight Flask-based middleware to receive ECG result files from medical devices and forward them to a DICOM PACS server (e.g., Orthanc) using the DICOM protocol. This repo is build to fulfill my task to integrate Dawei's ECG (that didn't have DICOM protocol) to a PACS Server, for this case i use ORTHANC as the PACS Server.
 
 ---
 
