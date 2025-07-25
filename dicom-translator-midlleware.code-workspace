@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../../../Orthanc/Worklists"
+		},
+		{
+			"path": "../../../../../Program Files/Orthanc Server"
+		}
+	],
+	"settings": {}
+}
