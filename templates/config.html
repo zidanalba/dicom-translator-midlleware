@@ -6,14 +6,23 @@
 <body>
     <h2>Edit DICOM Connection Config</h2>
     <form method="post">
-        <label>ORTHANC AE Title:</label><br>
-        <input type="text" name="ORTHANC_AE_TITLE" value="{{ config['ORTHANC_AE_TITLE'] }}" required><br><br>
+        <label>ORDER AE Title:</label><br>
+        <input type="text" name="ORDER_AE_TITLE" value="{{ config['ORDER_AE_TITLE'] }}" required><br><br>
 
-        <label>ORTHANC IP:</label><br>
-        <input type="text" name="ORTHANC_IP" value="{{ config['ORTHANC_IP'] }}" required><br><br>
+        <label>ORDER IP:</label><br>
+        <input type="text" name="ORDER_IP" value="{{ config['ORDER_IP'] }}" required><br><br>
 
-        <label>ORTHANC Port:</label><br>
-        <input type="number" name="ORTHANC_PORT" value="{{ config['ORTHANC_PORT'] }}" required><br><br>
+        <label>ORDER Port:</label><br>
+        <input type="number" name="ORDER_PORT" value="{{ config['ORDER_PORT'] }}" required><br><br>
+
+        <label>UPLOAD AE Title:</label><br>
+        <input type="text" name="UPLOAD_AE_TITLE" value="{{ config['UPLOAD_AE_TITLE'] }}" required><br><br>
+
+        <label>UPLOAD IP:</label><br>
+        <input type="text" name="UPLOAD_IP" value="{{ config['UPLOAD_IP'] }}" required><br><br>
+
+        <label>UPLOAD Port:</label><br>
+        <input type="number" name="UPLOAD_PORT" value="{{ config['UPLOAD_PORT'] }}" required><br><br>
 
         <label>Local AE Title:</label><br>
         <input type="text" name="LOCAL_AE_TITLE" value="{{ config['LOCAL_AE_TITLE'] }}" required><br><br>
@@ -35,6 +44,5 @@
     </form>
 
     <br>
-    <a href="/">← Back to Home</a>
 </body>
 </html>

@@ -27,9 +27,12 @@ def save_config(data):
 
 config = load_config()
 
-ORTHANC_AE_TITLE = config["ORTHANC_AE_TITLE"]
-ORTHANC_IP = config["ORTHANC_IP"]
-ORTHANC_PORT = config["ORTHANC_PORT"]
+ORDER_AE_TITLE = config["ORDER_AE_TITLE"]
+ORDER_IP = config["ORDER_IP"]
+ORDER_PORT = config["ORDER_PORT"]
+UPLOAD_AE_TITLE = config["UPLOAD_AE_TITLE"]
+UPLOAD_IP = config["UPLOAD_IP"]
+UPLOAD_PORT = config["UPLOAD_PORT"]
 LOCAL_AE_TITLE = config["LOCAL_AE_TITLE"]
 WORKLIST_FOLDER = config["ORTHANC_WORKLIST_FOLDER"]
 HIS_API_URL = config["HIS_API_URL"]
@@ -60,7 +63,7 @@ def dicom_cfind(patient_id):
     ae = AE(ae_title=LOCAL_AE_TITLE)
     ae.add_requested_context(ModalityWorklistInformationFind)
 
-    assoc = ae.associate(ORTHANC_IP, ORTHANC_PORT, ae_title=ORTHANC_AE_TITLE)
+    assoc = ae.associate(ORDER_IP, ORDER_PORT, ae_title=ORDER_AE_TITLE)
     if not assoc.is_established:
         raise ConnectionError("Could not associate with PACS server")
 
@@ -98,7 +101,7 @@ def xml_response(code, message):
     response.headers['Content-Type'] = 'application/xml'
     return response
 
-def send_dicom_to_orthanc(dicom_path, dest_ae=ORTHANC_AE_TITLE, dest_host=ORTHANC_IP, dest_port=ORTHANC_PORT):
+def send_dicom_to_orthanc(dicom_path, dest_ae=UPLOAD_AE_TITLE, dest_host=UPLOAD_IP, dest_port=UPLOAD_PORT):
     # Create Application Entity
     ae = AE(ae_title='FLASK')
 
@@ -292,9 +295,12 @@ def receive_octet_stream():
 def edit_config():
     if request.method == "POST":
         updated_config = {
-            "ORTHANC_AE_TITLE": request.form["ORTHANC_AE_TITLE"],
-            "ORTHANC_IP": request.form["ORTHANC_IP"],
-            "ORTHANC_PORT": int(request.form["ORTHANC_PORT"]),
+            "ORDER_AE_TITLE": request.form["ORDER_AE_TITLE"],
+            "ORDER_IP": request.form["ORDER_IP"],
+            "ORDER_PORT": int(request.form["ORDER_PORT"]),
+            "UPLOAD_AE_TITLE": request.form["UPLOAD_AE_TITLE"],
+            "UPLOAD_IP": request.form["UPLOAD_IP"],
+            "UPLOAD_PORT": int(request.form["UPLOAD_PORT"]),
             "LOCAL_AE_TITLE": request.form["LOCAL_AE_TITLE"],
             "ORTHANC_WORKLIST_FOLDER": request.form["ORTHANC_WORKLIST_FOLDER"],
             "SEND_TO_API": request.form.get("SEND_TO_API") == "true",
