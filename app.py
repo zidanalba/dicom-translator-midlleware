@@ -291,6 +291,92 @@ def receive_octet_stream():
         print(f"Upload Error: {e}")
         return xml_response(-1, 'Server error')
 
+@app.route("/receive-two", methods=["POST"])
+def receive_file():
+    try:
+        filename = None
+        file_content = None
+
+        log_path = os.path.join(UPLOAD_FOLDER, "request_debug.log")
+        with open(log_path, "a", encoding="utf-8") as log:
+            log.write("\n\n=== New Request ===\n")
+
+            # 🔎 Log request headers
+            log.write("=== Incoming Headers ===\n")
+            for k, v in request.headers.items():
+                log.write(f"{k}: {v}\n")
+            log.write("========================\n")
+
+            # 🔎 Log request meta info
+            log.write(f"Content-Type: {request.content_type}\n")
+            log.write(f"Content-Length: {request.content_length}\n")
+
+            if request.content_type and request.content_type.startswith("multipart/form-data"):
+                log.write("=== Multipart Form Debug ===\n")
+                log.write(f"Form fields: {request.form.to_dict()}\n")
+                log.write(f"File keys: {list(request.files.keys())}\n")
+
+                for key, storage in request.files.items():
+                    size = len(storage.read())
+                    storage.seek(0)  # reset pointer for saving later
+                    log.write(f"File field: {key}\n")
+                    log.write(f"  -> filename: {storage.filename}\n")
+                    log.write(f"  -> content_type: {storage.content_type}\n")
+                    log.write(f"  -> size: {size} bytes\n")
+                log.write("===========================\n")
+
+                if request.files:
+                    uploaded_file = next(iter(request.files.values()))
+                    filename = uploaded_file.filename
+                    file_content = uploaded_file.read()
+                else:
+                    return xml_response(-1, "No file part in multipart upload")
+
+            else:
+                # 📦 Old ECG (raw octet-stream + Filename header)
+                filename = request.headers.get("Filename")
+                if not filename:
+                    return xml_response(-1, "Filename header is missing")
+                file_content = request.get_data()
+
+        # ✅ Save the file
+        safe_filename = os.path.basename(filename)
+        save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+
+        with open(save_path, "wb") as f:
+            f.write(file_content)
+
+        # Log success
+        with open(log_path, "a", encoding="utf-8") as log:
+            log.write(f"Received file: {safe_filename}\n")
+            log.write(f"Saved to: {save_path}\n")
+
+        # Push to Orthanc
+        send_dicom_to_orthanc(save_path)
+
+        # Extract PDF if encapsulated
+        ds = pydicom.dcmread(save_path)
+        pdf_path = None
+        if hasattr(ds, "EncapsulatedDocument"):
+            pdf_bytes = ds.EncapsulatedDocument
+            pdf_filename = safe_filename.replace(".dcm", ".pdf")
+            pdf_path = os.path.join(UPLOAD_FOLDER, pdf_filename)
+            with open(pdf_path, "wb") as pdf_file:
+                pdf_file.write(pdf_bytes)
+
+            with open(log_path, "a", encoding="utf-8") as log:
+                log.write(f"Extracted PDF saved to: {pdf_path}\n")
+
+        if SEND_TO_API:
+            send_data_to_his(ds, pdf_path)
+
+        return xml_response(1, "Upload successful")
+
+    except Exception as e:
+        with open(os.path.join(UPLOAD_FOLDER, "request_debug.log"), "a", encoding="utf-8") as log:
+            log.write(f"Upload Error: {e}\n")
+        return xml_response(-1, "Server error")
+
 @app.route("/config", methods=["GET", "POST"])
 def edit_config():
     if request.method == "POST":
@@ -383,4 +469,4 @@ def home():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080, debug=True)
