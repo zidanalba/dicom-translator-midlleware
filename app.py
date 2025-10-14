@@ -10,6 +10,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 import logging
 import json
 import os
+import time
 import datetime
 import requests
 
@@ -38,6 +39,7 @@ WORKLIST_FOLDER = config["ORTHANC_WORKLIST_FOLDER"]
 HIS_API_URL = config["HIS_API_URL"]
 UPLOAD_FOLDER = config["RESULT_FOLDER"]
 SEND_TO_API = config["SEND_TO_API"]
+RESULT_FOLDER = config["RESULT_FOLDER"]
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
 
@@ -247,49 +249,69 @@ def query_worklist():
         )
 
 @app.route("/receive", methods=["POST"])
-def receive_octet_stream():
+def receive():
     try:
-        # Read filename from custom header
-        filename = request.headers.get('Filename')
-        if not filename:
-            return xml_response(-1, 'Filename header is missing')
+        log_path = os.path.join(RESULT_FOLDER, "request_debug.log")
+        filename = None
+        file_content = None
 
-        # Get binary data from body
-        file_content = request.get_data()
-        if not file_content:
-            return xml_response(-1, 'Empty file content')
+        with open(log_path, "a", encoding="utf-8") as log:
+            if request.content_type and request.content_type.startswith("multipart/form-data"):
+                
+                if not request.files:
+                    return xml_response(-1, "No file part in multipart upload")
+
+                # Use first file part
+                uploaded_file = next(iter(request.files.values()))
+                filename = uploaded_file.filename or f"upload_{int(time.time())}.dcm"
+                file_content = uploaded_file.read()
+
+
+            else:
+                filename = request.headers.get("Filename") or f"upload_{int(time.time())}.dcm"
+                file_content = request.get_data()
+
 
         # Save file
+        if not file_content:
+            return xml_response(-1, "Empty file content")
+
         safe_filename = os.path.basename(filename)
         save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-
-        with open(save_path, 'wb') as f:
+        with open(save_path, "wb") as f:
             f.write(file_content)
 
-        print(f"Received raw file: {safe_filename}")
-        print(f"Saved to: {save_path}")
 
+        # Push to Orthanc
         send_dicom_to_orthanc(save_path)
 
+        # Read DICOM and extract PDF if available
         ds = pydicom.dcmread(save_path)
         pdf_path = None
         if hasattr(ds, "EncapsulatedDocument"):
             pdf_bytes = ds.EncapsulatedDocument
-            pdf_filename = safe_filename.replace('.dcm', '.pdf')
+            pdf_filename = safe_filename.replace(".dcm", ".pdf")
             pdf_path = os.path.join(UPLOAD_FOLDER, pdf_filename)
             with open(pdf_path, "wb") as pdf_file:
                 pdf_file.write(pdf_bytes)
-            print(f"Extracted PDF saved to: {pdf_path}")
+            with open(log_path, "a", encoding="utf-8") as log:
+                log.write(f"📝 Extracted PDF saved to: {pdf_path}\n")
         else:
-            print("No EncapsulatedDocument tag found in DICOM.")
+            with open(log_path, "a", encoding="utf-8") as log:
+                log.write("ℹ️ No EncapsulatedDocument found in DICOM file\n")
 
+        # Send to HIS if configured
         if SEND_TO_API:
             send_data_to_his(ds, pdf_path)
 
-        return xml_response(1, 'Upload successful')
+        return xml_response(1, "Upload successful")
+
     except Exception as e:
-        print(f"Upload Error: {e}")
-        return xml_response(-1, 'Server error')
+        error_msg = f"Upload Error: {e}"
+        with open(os.path.join(UPLOAD_FOLDER, "request_debug.log"), "a", encoding="utf-8") as log:
+            log.write(f"{error_msg}\n")
+        print(error_msg)
+        return xml_response(-1, "Server error")
 
 @app.route("/receive-two", methods=["POST"])
 def receive_file():
