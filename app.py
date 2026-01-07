@@ -40,6 +40,8 @@ HIS_API_URL = config["HIS_API_URL"]
 UPLOAD_FOLDER = config["RESULT_FOLDER"]
 SEND_TO_API = config["SEND_TO_API"]
 RESULT_FOLDER = config["RESULT_FOLDER"]
+IS_QUERY_PACS = config["IS_QUERY_PACS"]
+IS_QUERY_BACKEND_SERVICE = config["IS_QUERY_BACKEND_SERVICE"]
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
 
@@ -228,7 +230,11 @@ def query_worklist():
         patient_id = parse_patient_id_from_xml(xml_data)
         logging.info(f"Received request for PatientID: {patient_id}")
 
+        # if IS_QUERY_PACS:
         dicom_response = dicom_cfind(patient_id)
+
+        # if IS_QUERY_BACKEND_SERVICE:
+
 
         if dicom_response:
             xml_response = dicom_to_xml_response(dicom_response)

@@ -2,12 +2,17 @@
     "ORDER_AE_TITLE": "ORTHANC",
     "ORDER_IP": "127.0.0.1",
     "ORDER_PORT": 4242,
+    
     "UPLOAD_AE_TITLE": "ORTHANC",
     "UPLOAD_IP": "127.0.0.1",
     "UPLOAD_PORT": 4242,
+
     "LOCAL_AE_TITLE": "ECG_BRIDGE",
     "ORTHANC_WORKLIST_FOLDER": "C:\\Orthanc\\Worklists",
+    
     "SEND_TO_API": true,
     "HIS_API_URL": "http://localhost:8000/api/ecg-result",
-    "RESULT_FOLDER": "./results"
+    "RESULT_FOLDER": "./results",
+    "IS_QUERY_PACS": true,
+    "IS_QUERY_BACKEND_SERVICE": false
 }
