@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DICOM Middleware</title>
+    <style>
+        body { font-family: Arial; margin: 0; }
+        nav { background: #1f2937; padding: 10px; }
+        nav a {
+            color: white;
+            margin-right: 20px;
+            text-decoration: none;
+        }
+        .container { padding: 20px; }
+        pre { background: #111; color: #0f0; padding: 10px; }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('info') }}">Info</a>
+        <a href="{{ url_for('edit_config') }}">Config</a>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const pacsToggle = document.getElementById("togglePACS");
+            const backendToggle = document.getElementById("toggleBackend");
+
+            const pacsFields = document.getElementById("pacsFields");
+            const backendFields = document.getElementById("backendFields");
+
+            pacsToggle.addEventListener("change", () => {
+                pacsFields.classList.toggle("hidden", !pacsToggle.checked);
+            });
+
+            backendToggle.addEventListener("change", () => {
+                backendFields.classList.toggle("hidden", !backendToggle.checked);
+            });
+        });
+    </script>
+</body>
+</html>

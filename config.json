@@ -1,18 +1,27 @@
 {
-    "ORDER_AE_TITLE": "ORTHANC",
-    "ORDER_IP": "127.0.0.1",
-    "ORDER_PORT": 4242,
-    
-    "UPLOAD_AE_TITLE": "ORTHANC",
-    "UPLOAD_IP": "127.0.0.1",
-    "UPLOAD_PORT": 4242,
-
-    "LOCAL_AE_TITLE": "ECG_BRIDGE",
-    "ORTHANC_WORKLIST_FOLDER": "C:\\Orthanc\\Worklists",
-    
-    "SEND_TO_API": true,
-    "HIS_API_URL": "http://localhost:8000/api/ecg-result",
-    "RESULT_FOLDER": "./results",
-    "IS_QUERY_PACS": true,
-    "IS_QUERY_BACKEND_SERVICE": false
+    "MODE": "demo",
+    "ORDER": {
+        "ENABLE_PACS": true,
+        "ENABLE_BACKEND": false,
+        "LOCAL_AE_TITLE": "ECG_BRIDGE",
+        "ORDER_AE_TITLE": "ORTHANC",
+        "ORDER_IP": "127.0.0.1",
+        "ORDER_PORT": 4242,
+        "ORDER_API_ADDRESS": "http://127.0.0.1:8000/api/worklist"
+    },
+    "UPLOAD": {
+        "ENABLE_PACS": true,
+        "UPLOAD_AE_TITLE": "ORTHANC",
+        "UPLOAD_IP": "127.0.0.1",
+        "UPLOAD_PORT": 4242,
+        "ENABLE_API": true,
+        "API_URL": "http://localhost:8000/api/ecg-result"
+    },
+    "DEMO": {
+        "ORTHANC_WORKLIST_FOLDER": "C:\\Orthanc\\Worklists"
+    },
+    "PATHS": {
+        "RESULT_FOLDER": "./results",
+        "LOG": "./logs"
+    }
 }

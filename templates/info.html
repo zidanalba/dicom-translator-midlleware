@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .log-container {
+        height: 300px;          /* fixed height */
+        overflow-y: auto;       /* vertical scroll */
+        background: #111;
+        border: 1px solid #333;
+    }
+
+    .log-container pre {
+        margin: 0;
+        padding: 10px;
+        color: #0f0;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;  /* wrap long lines */
+    }
+
+</style>
+
+<script>
+    const container = document.querySelector('.log-container');
+    container.scrollTop = container.scrollHeight;
+</script>
+
+<h2>Service Info</h2>
+
+<table>
+    {% for k, v in status.items() %}
+    <tr>
+        <td><b>{{ k }}</b></td>
+        <td>{{ v }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Live Logs</h3>
+
+<div class="log-container">
+    <pre>
+    {% for line in logs %}
+    {{ line }}
+    {% endfor %}
+    </pre>
+</div>
+
+{% endblock %}

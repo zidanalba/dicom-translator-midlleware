@@ -1,0 +1,74 @@
+
+
+=== New Request ===
+Time: 2025-10-14 14:07:09
+Content-Type: multipart/form-data; boundary=7d9ab1c50098
+Content-Length: 441432
+
+--- Headers ---
+Host: 192.168.34.23:8080
+Connection: Keep-Alive
+Content-Type: multipart/form-data; boundary=7d9ab1c50098
+Content-Length: 441432
+----------------
+Detected multipart/form-data upload
+Form fields: {}
+File keys: ['441256']
+Uploaded filename: 00000036-00CE-00C6-0205-E247118E1F2F.dcm
+Content-Type: application/octet-stream
+Size: 441256 bytes
+✅ File saved to: ./results\00000036-00CE-00C6-0205-E247118E1F2F.dcm
+📝 Extracted PDF saved to: ./results\00000036-00CE-00C6-0205-E247118E1F2F.pdf
+📤 Sent metadata and PDF to HIS API
+✅ Upload complete
+
+
+=== New Request ===
+Time: 2025-10-14 14:11:12
+Content-Type: multipart/form-data; boundary=7d9ab1c50098
+Content-Length: 441614
+
+--- Headers ---
+Host: 192.168.34.23:8080
+Connection: Keep-Alive
+Content-Type: multipart/form-data; boundary=7d9ab1c50098
+Content-Length: 441614
+----------------
+Detected multipart/form-data upload
+Form fields: {}
+File keys: ['441438']
+Uploaded filename: 000000A0-0000-0043-AB86-2B4CF78388D9.dcm
+Content-Type: application/octet-stream
+Size: 441438 bytes
+✅ File saved to: ./results\000000A0-0000-0043-AB86-2B4CF78388D9.dcm
+📝 Extracted PDF saved to: ./results\000000A0-0000-0043-AB86-2B4CF78388D9.pdf
+📤 Sent metadata and PDF to HIS API
+✅ Upload complete
+
+
+=== New Request ===
+Time: 2025-10-14 14:13:12
+Content-Type: multipart/form-data; boundary=7d9ab1c50098
+Content-Length: 762426
+
+--- Headers ---
+Host: 192.168.34.23:8080
+Connection: Keep-Alive
+Content-Type: multipart/form-data; boundary=7d9ab1c50098
+Content-Length: 762426
+----------------
+Detected multipart/form-data upload
+Form fields: {}
+File keys: ['762250']
+Uploaded filename: 000000AA-009B-0083-9B5E-0140DEAB72F8.dcm
+Content-Type: application/octet-stream
+Size: 762250 bytes
+✅ File saved to: ./results\000000AA-009B-0083-9B5E-0140DEAB72F8.dcm
+📝 Extracted PDF saved to: ./results\000000AA-009B-0083-9B5E-0140DEAB72F8.pdf
+📤 Sent metadata and PDF to HIS API
+✅ Upload complete
+📝 Extracted PDF saved to: ./results\0000002A-0095-00FF-E507-3A4B29ABBD18.pdf
+📝 Extracted PDF saved to: ./results\000000F3-00FE-00D8-D5E5-DF4E9BB3E2B3.pdf
+📝 Extracted PDF saved to: ./results\000000D5-00CF-00C8-9F58-CF4BC6AEC974.pdf
+📝 Extracted PDF saved to: ./results\000000E1-00E9-00FC-68D4-BE4AFB890D2B.pdf
+Upload Error: [Errno 2] No such file or directory: './logs\\request_debug.log'

@@ -1,3 +1,4 @@
+print("STEP 1: app.py loaded")
 from flask import Flask, request, Response, render_template, jsonify, redirect, url_for, make_response
 from lxml import etree
 from pynetdicom import AE
@@ -13,8 +14,32 @@ import os
 import time
 import datetime
 import requests
+import sys
+import threading
+from collections import deque
+from flask import jsonify
+from xml.etree.ElementTree import Element, SubElement, tostring
+from pydicom.valuerep import PersonName
+
+LOG_BUFFER = deque(maxlen=300)  # keep last 300 lines
+
+class StreamToBuffer:
+    def __init__(self, buffer):
+        self.buffer = buffer
+        self.lock = threading.Lock()
+
+    def write(self, message):
+        if message.strip():
+            with self.lock:
+                self.buffer.append(message.rstrip())
+
+    def flush(self):
+        pass
+
+# sys.stdout = StreamToBuffer(LOG_BUFFER)
 
 app = Flask(__name__)
+print("STEP 2: Flask created")
 
 CONFIG_PATH = "config.json"
 
@@ -28,20 +53,30 @@ def save_config(data):
 
 config = load_config()
 
-ORDER_AE_TITLE = config["ORDER_AE_TITLE"]
-ORDER_IP = config["ORDER_IP"]
-ORDER_PORT = config["ORDER_PORT"]
-UPLOAD_AE_TITLE = config["UPLOAD_AE_TITLE"]
-UPLOAD_IP = config["UPLOAD_IP"]
-UPLOAD_PORT = config["UPLOAD_PORT"]
-LOCAL_AE_TITLE = config["LOCAL_AE_TITLE"]
-WORKLIST_FOLDER = config["ORTHANC_WORKLIST_FOLDER"]
-HIS_API_URL = config["HIS_API_URL"]
-UPLOAD_FOLDER = config["RESULT_FOLDER"]
-SEND_TO_API = config["SEND_TO_API"]
-RESULT_FOLDER = config["RESULT_FOLDER"]
-IS_QUERY_PACS = config["IS_QUERY_PACS"]
-IS_QUERY_BACKEND_SERVICE = config["IS_QUERY_BACKEND_SERVICE"]
+ORDER_CONFIG = config.get("ORDER", {})
+UPLOAD_CONFIG = config.get("UPLOAD", {})
+DEMO_CONFIG = config.get("DEMO", {})
+PATHS_CONFIG = config.get("PATHS", {})
+
+ORDER_AE_TITLE = ORDER_CONFIG["ORDER_AE_TITLE"]
+ORDER_IP = ORDER_CONFIG["ORDER_IP"]
+ORDER_PORT = ORDER_CONFIG["ORDER_PORT"]
+ORDER_API_ADDRESS = ORDER_CONFIG["ORDER_API_ADDRESS"]
+LOCAL_AE_TITLE = ORDER_CONFIG["LOCAL_AE_TITLE"]
+IS_QUERY_PACS = ORDER_CONFIG["ENABLE_PACS"]
+IS_QUERY_BACKEND_SERVICE = ORDER_CONFIG["ENABLE_BACKEND"]
+
+SEND_TO_PACS = UPLOAD_CONFIG["ENABLE_PACS"]
+UPLOAD_AE_TITLE = UPLOAD_CONFIG["UPLOAD_AE_TITLE"]
+UPLOAD_IP = UPLOAD_CONFIG["UPLOAD_IP"]
+UPLOAD_PORT = UPLOAD_CONFIG["UPLOAD_PORT"]
+SEND_TO_API = UPLOAD_CONFIG["ENABLE_API"]
+HIS_API_URL = UPLOAD_CONFIG["API_URL"]
+
+WORKLIST_FOLDER = DEMO_CONFIG["ORTHANC_WORKLIST_FOLDER"]
+
+UPLOAD_FOLDER = PATHS_CONFIG["RESULT_FOLDER"]
+RESULT_FOLDER = PATHS_CONFIG["LOG"]
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True) 
 
@@ -133,6 +168,24 @@ def send_dicom_to_orthanc(dicom_path, dest_ae=UPLOAD_AE_TITLE, dest_host=UPLOAD_
     else:
         print("Could not establish association with Orthanc.")
 
+def format_patient_name(pn):
+    if not pn:
+        return ""
+
+    if isinstance(pn, PersonName):
+        # Join available name parts with spaces
+        parts = [
+            pn.family_name,
+            pn.given_name,
+            pn.middle_name,
+            pn.name_prefix,
+            pn.name_suffix,
+        ]
+        return " ".join(p for p in parts if p)
+
+    # Fallback for string
+    return str(pn).replace("^", " ")
+
 def dicom_to_xml_response(ds: Dataset) -> str:
     root = Element('root')
 
@@ -152,7 +205,7 @@ def dicom_to_xml_response(ds: Dataset) -> str:
     
     # PatientName bisa berupa PersonName object, kita konversi ke string
     patient_name = ds.get('PatientName', '')
-    SubElement(rows, 'PatientName').text = str(patient_name) if patient_name else ''
+    SubElement(rows, 'PatientName').text = format_patient_name(patient_name)
 
     SubElement(rows, 'PatientSex').text = ds.get('PatientSex', '')
     SubElement(rows, 'PatientAge').text = ds.get('PatientAge', '')
@@ -170,6 +223,65 @@ def dicom_to_xml_response(ds: Dataset) -> str:
 
     # Hasil XML
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(root, encoding='unicode')
+
+def backend_to_xml_response(data: dict) -> str:
+    root = Element("root")
+
+    SubElement(root, "Code").text = "1"
+    SubElement(root, "Message").text = ""
+
+    records = SubElement(root, "records")
+    rows = SubElement(records, "rows")
+
+    def add(tag, value):
+        SubElement(rows, tag).text = "" if value is None else str(value)
+
+    add("SerialNo", data.get("SerialNo"))
+    add("PatientID", data.get("PatientID"))
+    add("PatientName", data.get("PatientName"))
+    add("PatientSex", data.get("PatientSex"))
+    add("PatientAge", data.get("PatientAge"))
+    add("PatientAgeUnit", "Y")
+    add("PatientBirthDate", data.get("PatientBirthDate"))
+    add("RequestDepartment", data.get("RequestDepartment"))
+    add("RequestID", data.get("RequestID"))
+    add("SickBedNo", data.get("SickBedNo"))
+    add("Pacemaker", data.get("Pacemaker"))
+    add("ExamDepartment", data.get("ExamDepartment"))
+    add("Priority", data.get("Priority"))
+    add("fileGuid", data.get("fileGuid"))
+    add("RequestDate", data.get("RequestDate"))
+
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        + tostring(root, encoding="unicode")
+    )
+
+def query_backend_service(patient_id: str, api_address: str):
+    if not api_address:
+        raise ValueError("ORDER_API_ADDRESS is empty")
+
+    try:
+        logging.info(f"Query backend service for PatientID={patient_id}")
+
+        response = requests.get(
+            api_address,
+            params={"patient_id": patient_id},
+            timeout=5
+        )
+        response.raise_for_status()
+
+        data = response.json()
+
+        if not data or data.get("code") != 1:
+            logging.info("Backend returned no data")
+            return None
+
+        return backend_to_xml_response(data["data"])
+
+    except requests.RequestException as e:
+        logging.error(f"Backend service error: {e}")
+        return None
 
 def get_worklists_from_folder():
     worklists = []
@@ -228,31 +340,53 @@ def query_worklist():
     try:
         xml_data = request.data
         patient_id = parse_patient_id_from_xml(xml_data)
+
         logging.info(f"Received request for PatientID: {patient_id}")
 
-        # if IS_QUERY_PACS:
-        dicom_response = dicom_cfind(patient_id)
+        config = load_config()
+        order_cfg = config["ORDER"]
 
-        # if IS_QUERY_BACKEND_SERVICE:
+        xml_response = None
 
-
-        if dicom_response:
-            xml_response = dicom_to_xml_response(dicom_response)
-        else:
-            xml_response = etree.tostring(
-                etree.Element("Error", message="Patient not found"),
-                pretty_print=True, xml_declaration=True, encoding='UTF-8'
+        if order_cfg["ENABLE_BACKEND"]:
+            logging.info("Querying BACKEND service")
+            xml_response = query_backend_service(
+                patient_id,
+                order_cfg.get("ORDER_API_ADDRESS", "")
             )
 
-        return Response(xml_response, mimetype='application/xml')
+        elif order_cfg["ENABLE_PACS"]:
+            logging.info("Querying PACS (C-FIND)")
+            dicom_response = dicom_cfind(patient_id)
+            xml_response = dicom_to_xml_response(dicom_response)
+
+        else:
+            raise Exception("No query source enabled")
+
+        if not xml_response:
+            xml_response = etree.tostring(
+                etree.Element("Error", message="Patient not found"),
+                pretty_print=True,
+                xml_declaration=True,
+                encoding="UTF-8"
+            )
+
+
+        return Response(xml_response, mimetype="application/xml")
 
     except Exception as e:
         logging.exception("Error in query_worklist")
         return Response(
-            etree.tostring(etree.Element("Error", message=str(e)), pretty_print=True, xml_declaration=True, encoding='UTF-8'),
-            mimetype='application/xml',
+            etree.tostring(
+                etree.Element("Error", message=str(e)),
+                pretty_print=True,
+                xml_declaration=True,
+                encoding="UTF-8"
+            ),
+            mimetype="application/xml",
             status=500
         )
+
 
 @app.route("/receive", methods=["POST"])
 def receive():
@@ -301,10 +435,10 @@ def receive():
             with open(pdf_path, "wb") as pdf_file:
                 pdf_file.write(pdf_bytes)
             with open(log_path, "a", encoding="utf-8") as log:
-                log.write(f"📝 Extracted PDF saved to: {pdf_path}\n")
+                log.write(f"Extracted PDF saved to: {pdf_path}\n")
         else:
             with open(log_path, "a", encoding="utf-8") as log:
-                log.write("ℹ️ No EncapsulatedDocument found in DICOM file\n")
+                log.write("No EncapsulatedDocument found in DICOM file\n")
 
         # Send to HIS if configured
         if SEND_TO_API:
@@ -361,7 +495,6 @@ def receive_file():
                     return xml_response(-1, "No file part in multipart upload")
 
             else:
-                # 📦 Old ECG (raw octet-stream + Filename header)
                 filename = request.headers.get("Filename")
                 if not filename:
                     return xml_response(-1, "Filename header is missing")
@@ -408,24 +541,77 @@ def receive_file():
 @app.route("/config", methods=["GET", "POST"])
 def edit_config():
     if request.method == "POST":
+        query_mode = request.form.get("QUERY_MODE", "pacs")
+
         updated_config = {
-            "ORDER_AE_TITLE": request.form["ORDER_AE_TITLE"],
-            "ORDER_IP": request.form["ORDER_IP"],
-            "ORDER_PORT": int(request.form["ORDER_PORT"]),
-            "UPLOAD_AE_TITLE": request.form["UPLOAD_AE_TITLE"],
-            "UPLOAD_IP": request.form["UPLOAD_IP"],
-            "UPLOAD_PORT": int(request.form["UPLOAD_PORT"]),
-            "LOCAL_AE_TITLE": request.form["LOCAL_AE_TITLE"],
-            "ORTHANC_WORKLIST_FOLDER": request.form["ORTHANC_WORKLIST_FOLDER"],
-            "SEND_TO_API": request.form.get("SEND_TO_API") == "true",
-            "HIS_API_URL": request.form["HIS_API_URL"],
-            "RESULT_FOLDER": request.form["RESULT_FOLDER"],
+            "MODE": "demo",
+
+            "ORDER": {
+                "ENABLE_PACS": query_mode == "pacs",
+                "ENABLE_BACKEND": query_mode == "backend",
+
+                "LOCAL_AE_TITLE": request.form["LOCAL_AE_TITLE"],
+                "ORDER_AE_TITLE": request.form["ORDER_AE_TITLE"],
+                "ORDER_IP": request.form["ORDER_IP"],
+                "ORDER_PORT": int(request.form["ORDER_PORT"]),
+                "ORDER_API_ADDRESS": request.form.get("ORDER_API_ADDRESS", ""),
+            },
+
+            "UPLOAD": {
+                "ENABLE_PACS": "SEND_TO_PACS" in request.form,
+                "UPLOAD_AE_TITLE": request.form.get("UPLOAD_AE_TITLE", ""),
+                "UPLOAD_IP": request.form.get("UPLOAD_IP", ""),
+                "UPLOAD_PORT": int(request.form.get("UPLOAD_PORT", 0)),
+
+                "ENABLE_API": "SEND_TO_API" in request.form,
+                "API_URL": request.form.get("HIS_API_URL", ""),
+            },
+
+            "DEMO": {
+                "ORTHANC_WORKLIST_FOLDER": request.form["ORTHANC_WORKLIST_FOLDER"]
+            },
+
+            "PATHS": {
+                "RESULT_FOLDER": request.form["RESULT_FOLDER"],
+                "LOG": load_config()["PATHS"]["LOG"],  # preserve existing
+            }
         }
+
         save_config(updated_config)
-        return redirect(url_for('edit_config'))
-    
-    current_config = load_config()
-    return render_template("config.html", config=current_config)
+        return redirect(url_for("edit_config"))
+
+    # ===== GET =====
+    raw = load_config()
+
+    # Flatten for template
+    template_config = {
+        # Query mode
+        "QUERY_MODE": "backend"
+        if raw["ORDER"]["ENABLE_BACKEND"]
+        else "pacs",
+
+        # Order
+        "ORDER_AE_TITLE": raw["ORDER"]["ORDER_AE_TITLE"],
+        "ORDER_IP": raw["ORDER"]["ORDER_IP"],
+        "ORDER_PORT": raw["ORDER"]["ORDER_PORT"],
+        "LOCAL_AE_TITLE": raw["ORDER"]["LOCAL_AE_TITLE"],
+        "ORDER_API_ADDRESS": raw["ORDER"].get("ORDER_API_ADDRESS", ""),
+
+        # Upload
+        "SEND_TO_PACS": raw["UPLOAD"]["ENABLE_PACS"],
+        "UPLOAD_AE_TITLE": raw["UPLOAD"]["UPLOAD_AE_TITLE"],
+        "UPLOAD_IP": raw["UPLOAD"]["UPLOAD_IP"],
+        "UPLOAD_PORT": raw["UPLOAD"]["UPLOAD_PORT"],
+
+        "SEND_TO_API": raw["UPLOAD"]["ENABLE_API"],
+        "HIS_API_URL": raw["UPLOAD"]["API_URL"],
+
+        # Demo / paths
+        "ORTHANC_WORKLIST_FOLDER": raw["DEMO"]["ORTHANC_WORKLIST_FOLDER"],
+        "RESULT_FOLDER": raw["PATHS"]["RESULT_FOLDER"],
+    }
+
+    return render_template("config.html", config=template_config)
 
 @app.route("/worklists", methods=["GET"])
 def view_worklists():
@@ -493,8 +679,27 @@ def insert_worklist():
 
 @app.route("/")
 def home():
-    return "Middleware is running!", 200
+    return render_template("home.html")
+
+@app.route("/info")
+def info():
+    config = load_config()
+
+    status = {
+        "local_ae": config["LOCAL_AE_TITLE"],
+        "upload_port": config["UPLOAD_PORT"],
+        "order_ae": config["ORDER_AE_TITLE"]
+    }
+
+    logs = list(LOG_BUFFER)
+
+    return render_template(
+        "info.html",
+        status=status,
+        logs=logs
+    )
 
 
+print("STEP 3: before app.run")
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)

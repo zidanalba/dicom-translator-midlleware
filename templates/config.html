@@ -1,48 +1,132 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>App Configuration</title>
-</head>
-<body>
+{% extends "layout.html" %}
+{% block content %}
     <h2>Edit DICOM Connection Config</h2>
     <form method="post">
-        <label>ORDER AE Title:</label><br>
-        <input type="text" name="ORDER_AE_TITLE" value="{{ config['ORDER_AE_TITLE'] }}" required><br><br>
+        
+        <div>
+            <p><strong>Order Config</strong></p>
 
-        <label>ORDER IP:</label><br>
-        <input type="text" name="ORDER_IP" value="{{ config['ORDER_IP'] }}" required><br><br>
+            <label>Query Source</label><br>
+            <select name="QUERY_MODE" id="queryMode">
+                <option value="pacs" {% if config['QUERY_MODE'] == 'pacs' %}selected{% endif %}>
+                    PACS (DICOM MWL)
+                </option>
+                <option value="backend" {% if config['QUERY_MODE'] == 'backend' %}selected{% endif %}>
+                    Backend Service (API)
+                </option>
+            </select>
+            <br><br>
 
-        <label>ORDER Port:</label><br>
-        <input type="number" name="ORDER_PORT" value="{{ config['ORDER_PORT'] }}" required><br><br>
+            <!-- PACS fields -->
+            <div id="pacsFields" class="{% if config['QUERY_MODE'] != 'pacs' %}hidden{% endif %}">
+                <label>ORDER AE Title:</label><br>
+                <input type="text" name="ORDER_AE_TITLE" value="{{ config['ORDER_AE_TITLE'] }}"><br><br>
 
-        <label>UPLOAD AE Title:</label><br>
-        <input type="text" name="UPLOAD_AE_TITLE" value="{{ config['UPLOAD_AE_TITLE'] }}" required><br><br>
+                <label>Local AE Title:</label><br>
+                <input type="text" name="LOCAL_AE_TITLE" value="{{ config['LOCAL_AE_TITLE'] }}" required><br><br>
 
-        <label>UPLOAD IP:</label><br>
-        <input type="text" name="UPLOAD_IP" value="{{ config['UPLOAD_IP'] }}" required><br><br>
+                <label>ORDER IP:</label><br>
+                <input type="text" name="ORDER_IP" value="{{ config['ORDER_IP'] }}"><br><br>
 
-        <label>UPLOAD Port:</label><br>
-        <input type="number" name="UPLOAD_PORT" value="{{ config['UPLOAD_PORT'] }}" required><br><br>
+                <label>ORDER Port:</label><br>
+                <input type="number" name="ORDER_PORT" value="{{ config['ORDER_PORT'] }}"><br><br>
+            </div>
 
-        <label>Local AE Title:</label><br>
-        <input type="text" name="LOCAL_AE_TITLE" value="{{ config['LOCAL_AE_TITLE'] }}" required><br><br>
+            <!-- Backend fields -->
+            <div id="backendFields" class="{% if config['QUERY_MODE'] != 'backend' %}hidden{% endif %}">
+                <label>QUERY API ADDRESS:</label><br>
+                <input type="text" name="ORDER_API_ADDRESS"
+                    value="{{ config['ORDER_API_ADDRESS'] }}"><br><br>
+            </div>
+        </div>
+        
+        <div>
+            <p><strong>Upload Config</strong></p>
 
-        <label>ORTHANC WORKLIST FOLDER:</label><br>
-        <input type="text" name="ORTHANC_WORKLIST_FOLDER" value="{{ config['ORTHANC_WORKLIST_FOLDER'] }}" required><br><br>
+            <!-- Upload to PACS -->
+            <label>
+                <input type="checkbox" id="uploadPACS" name="SEND_TO_PACS"
+                    {% if config['SEND_TO_PACS'] %}checked{% endif %}>
+                Upload to PACS
+            </label>
+            <br><br>
 
-        <label>SEND TO API:</label><br>
-        <input type="checkbox" name="SEND_TO_API" value="true" {% if config['SEND_TO_API'] %}checked{% endif %} required><br><br>
+            <div id="uploadPACSFields" class="{% if not config['SEND_TO_PACS'] %}hidden{% endif %}">
+                <label>UPLOAD AE Title:</label><br>
+                <input type="text" name="UPLOAD_AE_TITLE"
+                    value="{{ config['UPLOAD_AE_TITLE'] }}"><br><br>
+
+                <label>UPLOAD IP:</label><br>
+                <input type="text" name="UPLOAD_IP"
+                    value="{{ config['UPLOAD_IP'] }}"><br><br>
+
+                <label>UPLOAD Port:</label><br>
+                <input type="number" name="UPLOAD_PORT"
+                    value="{{ config['UPLOAD_PORT'] }}"><br><br>
+            </div>
+
+            <hr>
+
+            <!-- Upload to API -->
+            <label>
+                <input type="checkbox" id="uploadAPI" name="SEND_TO_API"
+                    {% if config['SEND_TO_API'] %}checked{% endif %}>
+                Upload to API
+            </label>
+            <br><br>
+
+            <div id="uploadAPIFields" class="{% if not config['SEND_TO_API'] %}hidden{% endif %}">
+                <label>UPLOAD API URL:</label><br>
+                <input type="text" name="HIS_API_URL"
+                    value="{{ config['HIS_API_URL'] }}"><br><br>
+            </div>
+        </div>
 
 
-        <label>HIS API URL:</label><br>
-        <input type="text" name="HIS_API_URL" value="{{ config['HIS_API_URL'] }}"><br><br>
+        <div>
+            <p><strong>Local Config</strong></p>
 
-        <label>Local Result Folder:</label><br>
-        <input type="text" name="RESULT_FOLDER" value="{{ config['RESULT_FOLDER'] }}" required><br><br>
+            <label>ORTHANC WORKLIST FOLDER:</label><br>
+            <input type="text" name="ORTHANC_WORKLIST_FOLDER" value="{{ config['ORTHANC_WORKLIST_FOLDER'] }}" required><br><br>
+
+            <label>Local Result Folder:</label><br>
+            <input type="text" name="RESULT_FOLDER" value="{{ config['RESULT_FOLDER'] }}" required><br><br>
+        </div>
 
         <button type="submit">Save</button>
     </form>
+    <p><b>Note:</b> Some changes require service restart.</p>
 
-    <br>
-</body>
-</html>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const select = document.getElementById("queryMode");
+        const pacsFields = document.getElementById("pacsFields");
+        const backendFields = document.getElementById("backendFields");
+
+        function updateFields() {
+            const mode = select.value;
+            pacsFields.classList.toggle("hidden", mode !== "pacs");
+            backendFields.classList.toggle("hidden", mode !== "backend");
+        }
+
+        select.addEventListener("change", updateFields);
+        updateFields(); // initial state
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const uploadPACS = document.getElementById("uploadPACS");
+        const uploadAPI = document.getElementById("uploadAPI");
+
+        const pacsFields = document.getElementById("uploadPACSFields");
+        const apiFields = document.getElementById("uploadAPIFields");
+
+        uploadPACS.addEventListener("change", () => {
+            pacsFields.classList.toggle("hidden", !uploadPACS.checked);
+        });
+
+        uploadAPI.addEventListener("change", () => {
+            apiFields.classList.toggle("hidden", !uploadAPI.checked);
+        });
+    });
+    </script>
+{% endblock %}
