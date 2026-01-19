@@ -20,6 +20,34 @@ from collections import deque
 from flask import jsonify
 from xml.etree.ElementTree import Element, SubElement, tostring
 from pydicom.valuerep import PersonName
+from pydicom.errors import InvalidDicomError
+from enum import Enum
+from pynetdicom.sop_class import (
+    SecondaryCaptureImageStorage,
+    CTImageStorage,
+)
+from pydicom.uid import (
+    ImplicitVRLittleEndian,
+    ExplicitVRLittleEndian,
+    ExplicitVRBigEndian,
+    JPEGBaseline8Bit,
+    JPEGExtended12Bit,
+)
+
+class PayloadType(str, Enum):
+    # DICOM family
+    DICOM = "DICOM"
+    PDF_DCM = "PDF_DCM"
+    IMAGE_DCM = "IMAGE_DCM"   # JPEG-DCM, BMP-DCM, etc
+
+    # Non-DICOM
+    RAW_PDF = "RAW_PDF"
+    RAW_IMAGE = "RAW_IMAGE"   # JPG, JPEG, BMP, TIFF
+    FDA_XML = "FDA_XML"
+    SCP = "SCP"
+    DAT = "DAT"
+
+    UNKNOWN = "UNKNOWN"
 
 LOG_BUFFER = deque(maxlen=300)  # keep last 300 lines
 
@@ -141,18 +169,26 @@ def xml_response(code, message):
     return response
 
 def send_dicom_to_orthanc(dicom_path, dest_ae=UPLOAD_AE_TITLE, dest_host=UPLOAD_IP, dest_port=UPLOAD_PORT):
-    # Create Application Entity
-    ae = AE(ae_title='FLASK')
+    config = load_config()
+    upload_cfg = config["UPLOAD"]
 
-    # Add requested presentation context (storage SCP)
-    ae.add_requested_context(CTImageStorage)
-
-    # Read the DICOM file
     ds = dcmread(dicom_path)
+
+    ae = AE(ae_title=upload_cfg["LOCAL_AE_TITLE"])
+
+    ae.add_requested_context(
+        ds.SOPClassUID,
+        [
+            ImplicitVRLittleEndian,
+            ExplicitVRLittleEndian,
+            ExplicitVRBigEndian,
+            JPEGBaseline8Bit,
+            JPEGExtended12Bit,
+        ]
+    )
 
     ae.add_requested_context(ds.SOPClassUID)
 
-    # Associate with Orthanc
     assoc = ae.associate(dest_host, dest_port, ae_title=dest_ae)
 
     if assoc.is_established:
@@ -387,71 +423,204 @@ def query_worklist():
             status=500
         )
 
+def classify_payload(file_path):
+    ext = os.path.splitext(file_path.lower())[1]
+
+    if ext == ".dcm":
+        try:
+            ds = pydicom.dcmread(file_path, force=True, stop_before_pixels=True)
+
+            sop_class = str(ds.get("SOPClassUID", ""))
+
+            if sop_class == "1.2.840.10008.5.1.4.1.1.104.1":
+                return PayloadType.PDF_DCM, ds
+
+            if sop_class.startswith("1.2.840.10008.5.1.4.1.1"):
+                return PayloadType.IMAGE_DCM, ds
+
+            return PayloadType.DICOM, ds
+
+        except InvalidDicomError:
+            return PayloadType.UNKNOWN, None
+
+    if ext == ".xml":
+        return PayloadType.FDA_XML, None
+
+    if ext == ".scp":
+        return PayloadType.SCP, None
+
+    if ext in (".jpg", ".jpeg", ".bmp", ".tiff", ".tif"):
+        return PayloadType.RAW_IMAGE, None
+
+    if ext == ".dat":
+        return PayloadType.DAT, None
+
+    return PayloadType.UNKNOWN, None
+
+def log_incoming_request(request, log_path):
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
+    with open(log_path, "a", encoding="utf-8") as log:
+        log.write("\n\n================ NEW REQUEST ================\n")
+
+        log.write(f"Method: {request.method}\n")
+        log.write(f"Remote Addr: {request.remote_addr}\n")
+        log.write(f"Content-Type: {request.content_type}\n")
+        log.write(f"Content-Length: {request.content_length}\n\n")
+
+        log.write("=== HEADERS ===\n")
+        for k, v in request.headers.items():
+            log.write(f"{k}: {v}\n")
+        log.write("\n")
+
+        if request.content_type and request.content_type.startswith("multipart/form-data"):
+            log.write("=== MULTIPART FORM ===\n")
+            log.write(f"Form keys: {list(request.form.keys())}\n")
+            log.write(f"File keys: {list(request.files.keys())}\n\n")
+
+            for key, file in request.files.items():
+                file_bytes = file.read()
+                file.seek(0)
+
+                log.write(f"[FILE FIELD] {key}\n")
+                log.write(f"  Filename     : {file.filename}\n")
+                log.write(f"  Content-Type : {file.content_type}\n")
+                log.write(f"  Size         : {len(file_bytes)} bytes\n")
+                log.write(f"  First 64 bytes (hex): {file_bytes[:64].hex()}\n\n")
+
+        else:
+            raw = request.get_data()
+            log.write("=== RAW BODY ===\n")
+            log.write(f"Raw size: {len(raw)} bytes\n")
+            log.write(f"First 64 bytes (hex): {raw[:64].hex()}\n\n")
+
+        log.write("============== END REQUEST ==================\n")
+
+def save_incoming_file(request, upload_dir):
+    os.makedirs(upload_dir, exist_ok=True)
+
+    if request.content_type and request.content_type.startswith("multipart/form-data"):
+        if not request.files:
+            raise ValueError("No file part in multipart upload")
+
+        uploaded_file = next(iter(request.files.values()))
+        filename = uploaded_file.filename or f"upload_{int(time.time())}"
+        data = uploaded_file.read()
+    else:
+        filename = request.headers.get("Filename") or f"upload_{int(time.time())}"
+        data = request.get_data()
+
+    if not data:
+        raise ValueError("Empty payload")
+
+    safe_name = os.path.basename(filename)
+    save_path = os.path.join(upload_dir, safe_name)
+
+    with open(save_path, "wb") as f:
+        f.write(data)
+
+    logging.info(f"Saved incoming file to {save_path}")
+    return save_path
+
+def classify_payload(file_path):
+    ext = os.path.splitext(file_path.lower())[1]
+
+    # DICOM
+    if ext == ".dcm":
+        try:
+            ds = pydicom.dcmread(file_path, force=True, stop_before_pixels=True)
+            sop = str(ds.get("SOPClassUID", ""))
+
+            if sop == "1.2.840.10008.5.1.4.1.1.104.1":
+                return PayloadType.PDF_DCM, ds
+
+            if sop.startswith("1.2.840.10008.5.1.4.1.1"):
+                return PayloadType.IMAGE_DCM, ds
+
+            return PayloadType.DICOM, ds
+        except Exception:
+            return PayloadType.UNKNOWN, None
+
+    if ext == ".xml":
+        return PayloadType.FDA_XML, None
+
+    if ext == ".scp":
+        return PayloadType.SCP, None
+
+    if ext in (".jpg", ".jpeg", ".bmp", ".tif", ".tiff"):
+        return PayloadType.RAW_IMAGE, None
+
+    if ext == ".pdf":
+        return PayloadType.RAW_PDF, None
+
+    if ext == ".dat":
+        return PayloadType.DAT, None
+
+    return PayloadType.UNKNOWN, None
+
+def route_to_pacs(payload_type, file_path):
+    if payload_type in (
+        PayloadType.DICOM,
+        PayloadType.PDF_DCM,
+        PayloadType.IMAGE_DCM,
+    ):
+        logging.info("Routing to PACS")
+        send_dicom_to_orthanc(file_path)
+    else:
+        logging.info(f"Skipping PACS for {payload_type}")
+
+
+def route_to_his(payload_type, ds, file_path):
+    logging.info(f"Routing to HIS ({payload_type})")
+
+    if payload_type == PayloadType.PDF_DCM and ds and hasattr(ds, "EncapsulatedDocument"):
+        # send_pdf_to_his(ds.EncapsulatedDocument)
+        print("send pdf to his")
+
+    elif payload_type == PayloadType.RAW_PDF:
+        with open(file_path, "rb") as f:
+            print("send pdf to his")
+            # send_pdf_to_his(f.read())
+
+    elif payload_type == PayloadType.RAW_IMAGE:
+        with open(file_path, "rb") as f:
+            print("send image to his")
+            # send_image_to_his(f.read())
+
+    elif payload_type == PayloadType.FDA_XML:
+        with open(file_path, "rb") as f:
+            print("send xml to his")
+            # send_xml_to_his(f.read())
+
+    else:
+        logging.warning(f"HIS routing not supported for {payload_type}")
+
 
 @app.route("/receive", methods=["POST"])
 def receive():
+    log_path = os.path.join(RESULT_FOLDER, "request_debug.log")
+    os.makedirs(RESULT_FOLDER, exist_ok=True)
+
     try:
-        log_path = os.path.join(RESULT_FOLDER, "request_debug.log")
-        filename = None
-        file_content = None
+        log_incoming_request(request, log_path)
+        
+        save_path = save_incoming_file(request, RESULT_FOLDER)
 
-        with open(log_path, "a", encoding="utf-8") as log:
-            if request.content_type and request.content_type.startswith("multipart/form-data"):
-                
-                if not request.files:
-                    return xml_response(-1, "No file part in multipart upload")
+        payload_type, ds = classify_payload(save_path)
+        logging.info(f"[CLASSIFY] Payload type: {payload_type}")
 
-                # Use first file part
-                uploaded_file = next(iter(request.files.values()))
-                filename = uploaded_file.filename or f"upload_{int(time.time())}.dcm"
-                file_content = uploaded_file.read()
+        route_to_pacs(payload_type, save_path)
 
-
-            else:
-                filename = request.headers.get("Filename") or f"upload_{int(time.time())}.dcm"
-                file_content = request.get_data()
-
-
-        # Save file
-        if not file_content:
-            return xml_response(-1, "Empty file content")
-
-        safe_filename = os.path.basename(filename)
-        save_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-        with open(save_path, "wb") as f:
-            f.write(file_content)
-
-
-        # Push to Orthanc
-        send_dicom_to_orthanc(save_path)
-
-        # Read DICOM and extract PDF if available
-        ds = pydicom.dcmread(save_path)
-        pdf_path = None
-        if hasattr(ds, "EncapsulatedDocument"):
-            pdf_bytes = ds.EncapsulatedDocument
-            pdf_filename = safe_filename.replace(".dcm", ".pdf")
-            pdf_path = os.path.join(UPLOAD_FOLDER, pdf_filename)
-            with open(pdf_path, "wb") as pdf_file:
-                pdf_file.write(pdf_bytes)
-            with open(log_path, "a", encoding="utf-8") as log:
-                log.write(f"Extracted PDF saved to: {pdf_path}\n")
-        else:
-            with open(log_path, "a", encoding="utf-8") as log:
-                log.write("No EncapsulatedDocument found in DICOM file\n")
-
-        # Send to HIS if configured
         if SEND_TO_API:
-            send_data_to_his(ds, pdf_path)
+            route_to_his(payload_type, ds, save_path)
 
         return xml_response(1, "Upload successful")
 
     except Exception as e:
-        error_msg = f"Upload Error: {e}"
-        with open(os.path.join(UPLOAD_FOLDER, "request_debug.log"), "a", encoding="utf-8") as log:
-            log.write(f"{error_msg}\n")
-        print(error_msg)
-        return xml_response(-1, "Server error")
+        logging.exception("Receive error")
+        return xml_response(-1, str(e))
+
+
 
 @app.route("/receive-two", methods=["POST"])
 def receive_file():
@@ -463,13 +632,11 @@ def receive_file():
         with open(log_path, "a", encoding="utf-8") as log:
             log.write("\n\n=== New Request ===\n")
 
-            # 🔎 Log request headers
             log.write("=== Incoming Headers ===\n")
             for k, v in request.headers.items():
                 log.write(f"{k}: {v}\n")
             log.write("========================\n")
 
-            # 🔎 Log request meta info
             log.write(f"Content-Type: {request.content_type}\n")
             log.write(f"Content-Length: {request.content_length}\n")
 

@@ -1,8 +1,8 @@
 {
     "MODE": "demo",
     "ORDER": {
-        "ENABLE_PACS": true,
-        "ENABLE_BACKEND": false,
+        "ENABLE_PACS": false,
+        "ENABLE_BACKEND": true,
         "LOCAL_AE_TITLE": "ECG_BRIDGE",
         "ORDER_AE_TITLE": "ORTHANC",
         "ORDER_IP": "127.0.0.1",
@@ -11,6 +11,7 @@
     },
     "UPLOAD": {
         "ENABLE_PACS": true,
+        "LOCAL_AE_TITLE": "ECG_BRIDGE",
         "UPLOAD_AE_TITLE": "ORTHANC",
         "UPLOAD_IP": "127.0.0.1",
         "UPLOAD_PORT": 4242,
