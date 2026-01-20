@@ -1,8 +1,8 @@
 {
     "MODE": "demo",
     "ORDER": {
-        "ENABLE_PACS": false,
-        "ENABLE_BACKEND": true,
+        "ENABLE_PACS": true,
+        "ENABLE_BACKEND": false,
         "LOCAL_AE_TITLE": "ECG_BRIDGE",
         "ORDER_AE_TITLE": "ORTHANC",
         "ORDER_IP": "127.0.0.1",
@@ -11,11 +11,11 @@
     },
     "UPLOAD": {
         "ENABLE_PACS": true,
-        "LOCAL_AE_TITLE": "ECG_BRIDGE",
         "UPLOAD_AE_TITLE": "ORTHANC",
+        "LOCAL_AE_TITLE": "ECG_BRIDGE",
         "UPLOAD_IP": "127.0.0.1",
         "UPLOAD_PORT": 4242,
-        "ENABLE_API": true,
+        "ENABLE_API": false,
         "API_URL": "http://localhost:8000/api/ecg-result"
     },
     "DEMO": {

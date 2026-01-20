@@ -1,4 +1,7 @@
 print("STEP 1: app.py loaded")
+# from pynetdicom import debug_logger
+
+# debug_logger()
 from flask import Flask, request, Response, render_template, jsonify, redirect, url_for, make_response
 from lxml import etree
 from pynetdicom import AE
@@ -11,6 +14,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring
 import logging
 import json
 import os
+import io
 import time
 import datetime
 import requests
@@ -168,41 +172,44 @@ def xml_response(code, message):
     response.headers['Content-Type'] = 'application/xml'
     return response
 
-def send_dicom_to_orthanc(dicom_path, dest_ae=UPLOAD_AE_TITLE, dest_host=UPLOAD_IP, dest_port=UPLOAD_PORT):
+def send_dicom_to_orthanc(dicom_path, dest_ae=UPLOAD_AE_TITLE,
+                          dest_host=UPLOAD_IP, dest_port=UPLOAD_PORT):
+
     config = load_config()
     upload_cfg = config["UPLOAD"]
 
     ds = dcmread(dicom_path)
 
-    ae = AE(ae_title=upload_cfg["LOCAL_AE_TITLE"])
+    if ds.file_meta.TransferSyntaxUID.is_compressed:
+        ds.decompress()
+        ds.file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
+        ds.is_little_endian = True
+        ds.is_implicit_VR = False
+
+    ae = AE(ae_title=upload_cfg["UPLOAD_AE_TITLE"])
 
     ae.add_requested_context(
         ds.SOPClassUID,
         [
-            ImplicitVRLittleEndian,
             ExplicitVRLittleEndian,
-            ExplicitVRBigEndian,
+            ImplicitVRLittleEndian,
             JPEGBaseline8Bit,
             JPEGExtended12Bit,
         ]
     )
 
-    ae.add_requested_context(ds.SOPClassUID)
-
     assoc = ae.associate(dest_host, dest_port, ae_title=dest_ae)
 
-    if assoc.is_established:
-        print("Association established, sending DICOM file...")
-        status = assoc.send_c_store(ds)
+    if not assoc.is_established:
+        raise RuntimeError("Could not establish association with Orthanc")
 
-        if status:
-            print(f"C-STORE request status: 0x{status.Status:04x}")
-        else:
-            print("Connection timed out or was aborted.")
+    status = assoc.send_c_store(ds)
 
-        assoc.release()
-    else:
-        print("Could not establish association with Orthanc.")
+    if not status:
+        raise RuntimeError("C-STORE failed")
+
+    assoc.release()
+
 
 def format_patient_name(pn):
     if not pn:
@@ -260,38 +267,62 @@ def dicom_to_xml_response(ds: Dataset) -> str:
     # Hasil XML
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + tostring(root, encoding='unicode')
 
+def map_patient_sex(value) -> str:
+    if not value:
+        return ''
+
+    v = str(value).strip().lower()
+
+    if v in ('m', 'male', 'laki-laki', 'laki', 'pria'):
+        return 'M'
+    if v in ('f', 'female', 'perempuan', 'wanita'):
+        return 'F'
+
+    return ''
+
 def backend_to_xml_response(data: dict) -> str:
-    root = Element("root")
+    root = Element('root')
 
-    SubElement(root, "Code").text = "1"
-    SubElement(root, "Message").text = ""
+    # Kode sukses dan pesan (WAJIB & URUTAN PENTING)
+    code = SubElement(root, 'Code')
+    code.text = '1'
 
-    records = SubElement(root, "records")
-    rows = SubElement(records, "rows")
+    message = SubElement(root, 'Message')
+    message.text = ''
 
-    def add(tag, value):
-        SubElement(rows, tag).text = "" if value is None else str(value)
+    # records -> rows (WAJIB)
+    records = SubElement(root, 'records')
+    rows = SubElement(records, 'rows')
 
-    add("SerialNo", data.get("SerialNo"))
-    add("PatientID", data.get("PatientID"))
-    add("PatientName", data.get("PatientName"))
-    add("PatientSex", data.get("PatientSex"))
-    add("PatientAge", data.get("PatientAge"))
-    add("PatientAgeUnit", "Y")
-    add("PatientBirthDate", data.get("PatientBirthDate"))
-    add("RequestDepartment", data.get("RequestDepartment"))
-    add("RequestID", data.get("RequestID"))
-    add("SickBedNo", data.get("SickBedNo"))
-    add("Pacemaker", data.get("Pacemaker"))
-    add("ExamDepartment", data.get("ExamDepartment"))
-    add("Priority", data.get("Priority"))
-    add("fileGuid", data.get("fileGuid"))
-    add("RequestDate", data.get("RequestDate"))
+    # Helper untuk aman dari None
+    def val(key, default=''):
+        v = data.get(key)
+        return '' if v is None else str(v)
 
-    return (
+    SubElement(rows, 'SerialNo').text = val('SerialNo')
+    SubElement(rows, 'PatientID').text = val('PatientID')
+    SubElement(rows, 'PatientName').text = val('PatientName')
+    SubElement(rows, 'PatientSex').text = map_patient_sex(data.get('PatientSex'))
+    SubElement(rows, 'PatientAge').text = val('PatientAge')
+    SubElement(rows, 'PatientAgeUnit').text = 'Y'   # HARDCODE seperti DICOM
+    SubElement(rows, 'PatientBirthDate').text = val('PatientBirthDate')
+    SubElement(rows, 'RequestDepartment').text = val('RequestDepartment')
+    SubElement(rows, 'RequestID').text = val('RequestID')
+    SubElement(rows, 'SickBedNo').text = val('SickBedNo')
+    SubElement(rows, 'Pacemaker').text = '2'        # HARDCODE seperti DICOM
+    SubElement(rows, 'ExamDepartment').text = val('ExamDepartment')
+    SubElement(rows, 'Priority').text = val('Priority')
+    SubElement(rows, 'fileGuid').text = val('fileGuid')
+    SubElement(rows, 'RequestDate').text = val('RequestDate')
+
+    xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
-        + tostring(root, encoding="unicode")
+        + tostring(root, encoding='unicode')
     )
+
+    logging.info("Generated BACKEND XML:\n%s", xml)
+
+    return xml
 
 def query_backend_service(patient_id: str, api_address: str):
     if not api_address:
@@ -303,7 +334,7 @@ def query_backend_service(patient_id: str, api_address: str):
         response = requests.get(
             api_address,
             params={"patient_id": patient_id},
-            timeout=5
+            timeout=10
         )
         response.raise_for_status()
 
@@ -395,6 +426,7 @@ def query_worklist():
             logging.info("Querying PACS (C-FIND)")
             dicom_response = dicom_cfind(patient_id)
             xml_response = dicom_to_xml_response(dicom_response)
+            logging.info("Generated PACS XML:\n%s", xml_response)
 
         else:
             raise Exception("No query source enabled")
@@ -570,11 +602,46 @@ def route_to_pacs(payload_type, file_path):
         logging.info(f"Skipping PACS for {payload_type}")
 
 
+def send_pdf_to_his(pdf_bytes, ds):
+    config = load_config()
+    url = config["UPLOAD"]["API_URL"]
+
+    patient_id = getattr(ds, "PatientID", "")
+    study_date = getattr(ds, "StudyDate", "")
+    exam_name = getattr(ds, "StudyDescription", "ECG")
+
+    files = {
+        "pdf": (
+            "ecg_result.pdf",
+            io.BytesIO(pdf_bytes),
+            "application/pdf"
+        )
+    }
+
+    data = {
+        "patient_id": patient_id,
+        "exam_name": exam_name,
+        "study_date": study_date,
+    }
+
+    logging.info(
+        "Sending PDF to HIS | patient_id=%s exam=%s date=%s",
+        patient_id, exam_name, study_date
+    )
+
+    resp = requests.post(url, files=files, data=data, timeout=15)
+
+    if resp.status_code != 200:
+        logging.error("HIS error %s: %s", resp.status_code, resp.text)
+        resp.raise_for_status()
+
+    logging.info("PDF successfully sent to HIS: %s", resp.json())
+
 def route_to_his(payload_type, ds, file_path):
     logging.info(f"Routing to HIS ({payload_type})")
 
     if payload_type == PayloadType.PDF_DCM and ds and hasattr(ds, "EncapsulatedDocument"):
-        # send_pdf_to_his(ds.EncapsulatedDocument)
+        send_pdf_to_his(ds.EncapsulatedDocument, ds)
         print("send pdf to his")
 
     elif payload_type == PayloadType.RAW_PDF:
@@ -600,6 +667,8 @@ def route_to_his(payload_type, ds, file_path):
 def receive():
     log_path = os.path.join(RESULT_FOLDER, "request_debug.log")
     os.makedirs(RESULT_FOLDER, exist_ok=True)
+    config = load_config()
+    upload_cfg = config["UPLOAD"]
 
     try:
         log_incoming_request(request, log_path)
@@ -609,9 +678,10 @@ def receive():
         payload_type, ds = classify_payload(save_path)
         logging.info(f"[CLASSIFY] Payload type: {payload_type}")
 
-        route_to_pacs(payload_type, save_path)
+        if upload_cfg["ENABLE_PACS"]:
+            route_to_pacs(payload_type, save_path)
 
-        if SEND_TO_API:
+        if upload_cfg["ENABLE_API"]:
             route_to_his(payload_type, ds, save_path)
 
         return xml_response(1, "Upload successful")
@@ -619,8 +689,6 @@ def receive():
     except Exception as e:
         logging.exception("Receive error")
         return xml_response(-1, str(e))
-
-
 
 @app.route("/receive-two", methods=["POST"])
 def receive_file():
@@ -710,6 +778,8 @@ def edit_config():
     if request.method == "POST":
         query_mode = request.form.get("QUERY_MODE", "pacs")
 
+        old = load_config()
+
         updated_config = {
             "MODE": "demo",
 
@@ -717,16 +787,17 @@ def edit_config():
                 "ENABLE_PACS": query_mode == "pacs",
                 "ENABLE_BACKEND": query_mode == "backend",
 
-                "LOCAL_AE_TITLE": request.form["LOCAL_AE_TITLE"],
-                "ORDER_AE_TITLE": request.form["ORDER_AE_TITLE"],
-                "ORDER_IP": request.form["ORDER_IP"],
-                "ORDER_PORT": int(request.form["ORDER_PORT"]),
+                "LOCAL_AE_TITLE": request.form.get("ORDER_LOCAL_AE_TITLE", ""),
+                "ORDER_AE_TITLE": request.form.get("ORDER_AE_TITLE", ""),
+                "ORDER_IP": request.form.get("ORDER_IP", ""),
+                "ORDER_PORT": int(request.form.get("ORDER_PORT", 0)),
                 "ORDER_API_ADDRESS": request.form.get("ORDER_API_ADDRESS", ""),
             },
 
             "UPLOAD": {
                 "ENABLE_PACS": "SEND_TO_PACS" in request.form,
                 "UPLOAD_AE_TITLE": request.form.get("UPLOAD_AE_TITLE", ""),
+                "LOCAL_AE_TITLE": request.form.get("UPLOAD_LOCAL_AE_TITLE", ""),
                 "UPLOAD_IP": request.form.get("UPLOAD_IP", ""),
                 "UPLOAD_PORT": int(request.form.get("UPLOAD_PORT", 0)),
 
@@ -735,13 +806,15 @@ def edit_config():
             },
 
             "DEMO": {
-                "ORTHANC_WORKLIST_FOLDER": request.form["ORTHANC_WORKLIST_FOLDER"]
+                "ORTHANC_WORKLIST_FOLDER": request.form.get(
+                    "ORTHANC_WORKLIST_FOLDER", ""
+                )
             },
 
             "PATHS": {
-                "RESULT_FOLDER": request.form["RESULT_FOLDER"],
-                "LOG": load_config()["PATHS"]["LOG"],  # preserve existing
-            }
+                "RESULT_FOLDER": request.form.get("RESULT_FOLDER", ""),
+                "LOG": old["PATHS"]["LOG"],  # preserve
+            },
         }
 
         save_config(updated_config)
@@ -750,30 +823,30 @@ def edit_config():
     # ===== GET =====
     raw = load_config()
 
-    # Flatten for template
     template_config = {
         # Query mode
         "QUERY_MODE": "backend"
         if raw["ORDER"]["ENABLE_BACKEND"]
         else "pacs",
 
-        # Order
+        # ORDER
         "ORDER_AE_TITLE": raw["ORDER"]["ORDER_AE_TITLE"],
+        "ORDER_LOCAL_AE_TITLE": raw["ORDER"]["LOCAL_AE_TITLE"],
         "ORDER_IP": raw["ORDER"]["ORDER_IP"],
         "ORDER_PORT": raw["ORDER"]["ORDER_PORT"],
-        "LOCAL_AE_TITLE": raw["ORDER"]["LOCAL_AE_TITLE"],
         "ORDER_API_ADDRESS": raw["ORDER"].get("ORDER_API_ADDRESS", ""),
 
-        # Upload
+        # UPLOAD
         "SEND_TO_PACS": raw["UPLOAD"]["ENABLE_PACS"],
         "UPLOAD_AE_TITLE": raw["UPLOAD"]["UPLOAD_AE_TITLE"],
+        "UPLOAD_LOCAL_AE_TITLE": raw["UPLOAD"]["LOCAL_AE_TITLE"],
         "UPLOAD_IP": raw["UPLOAD"]["UPLOAD_IP"],
         "UPLOAD_PORT": raw["UPLOAD"]["UPLOAD_PORT"],
 
         "SEND_TO_API": raw["UPLOAD"]["ENABLE_API"],
         "HIS_API_URL": raw["UPLOAD"]["API_URL"],
 
-        # Demo / paths
+        # DEMO / PATHS
         "ORTHANC_WORKLIST_FOLDER": raw["DEMO"]["ORTHANC_WORKLIST_FOLDER"],
         "RESULT_FOLDER": raw["PATHS"]["RESULT_FOLDER"],
     }
