@@ -22,8 +22,10 @@
                 <label>ORDER AE Title:</label><br>
                 <input type="text" name="ORDER_AE_TITLE" value="{{ config['ORDER_AE_TITLE'] }}"><br><br>
 
-                <label>Local AE Title:</label><br>
-                <input type="text" name="LOCAL_AE_TITLE" value="{{ config['LOCAL_AE_TITLE'] }}" required><br><br>
+                <label>Local AE Title (Query):</label><br>
+                <input type="text" name="ORDER_LOCAL_AE_TITLE"
+                    value="{{ config['ORDER_LOCAL_AE_TITLE'] }}" required><br><br>
+
 
                 <label>ORDER IP:</label><br>
                 <input type="text" name="ORDER_IP" value="{{ config['ORDER_IP'] }}"><br><br>
@@ -53,8 +55,11 @@
 
             <div id="uploadPACSFields" class="{% if not config['SEND_TO_PACS'] %}hidden{% endif %}">
                 <label>UPLOAD AE Title:</label><br>
-                <input type="text" name="UPLOAD_AE_TITLE"
-                    value="{{ config['UPLOAD_AE_TITLE'] }}"><br><br>
+                <input type="text" name="UPLOAD_AE_TITLE" value="{{ config['UPLOAD_AE_TITLE'] }}"><br><br>
+                
+                <label>Local AE Title (Uploader):</label><br>
+                <input type="text" name="UPLOAD_LOCAL_AE_TITLE"
+                    value="{{ config['UPLOAD_LOCAL_AE_TITLE'] }}"><br><br>
 
                 <label>UPLOAD IP:</label><br>
                 <input type="text" name="UPLOAD_IP"

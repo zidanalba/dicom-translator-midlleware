@@ -1,0 +1,691 @@
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 0000008A-0094-007A-3D03-8941F5B90299.dat
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 3456 bytes
+First 64 bytes (hex): 0100000003000000322e30020000002400000030303030303038412d303039342d303037412d334430332d383934314635423930323939020010000100000032
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 0000008D-000C-005E-29BB-FF42AF8CDB19.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612344 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000FF-0005-001F-94E2-114E42A6DB6D.scp
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 81921 bytes
+First 64 bytes (hex): 624801400100199a0000880000000d0d534350454347000088000000070000000100d10000008f0000000200000000000000000003005a000000600100000400
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/xml
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000018-0066-0046-839A-E44653A4CCAC.xml
+Content-Type: application/xml
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 301525 bytes
+First 64 bytes (hex): 3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d225554462d3822203f3e0a3c416e6e6f746174656445434720786d6c6e733d2275726e
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 0000005C-00DE-00A7-DF6B-964F9FAD4B17.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612344 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: GUID-3.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612404 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: GUID-4.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612376 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000C5-000B-00AD-FF55-204757A6D015.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612436 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: GUID-5.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 828902 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000BF-00EE-00D1-B623-1E4A9E8307D9.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 828964 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000084-00B7-00CC-4748-BF402B9DC55A.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 829048 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000FC-00CF-00BD-54CF-3946159F8669.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612384 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: GUID-6.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827906 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000084-004B-00F6-6F60-F248C2A8061D.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827898 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 0000000F-00D7-00E9-1E31-AE4DA6931A40.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827880 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000028-0012-00A3-60E4-7849C9B63FC8.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827946 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 192.168.34.37
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000097-009F-002F-08E5-924F6B91A030.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827990 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/xml
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Filename: test.xml
+Content-Type: application/xml
+
+=== RAW BODY ===
+Raw size: 0 bytes
+First 64 bytes (hex): 
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: GUID-6.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827168 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000057-007A-00CF-3601-164173BE8FEB.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827158 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000050-000D-0008-6D39-024B2DA83F18.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 827198 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000CD-00DA-001F-A31D-BC439E89CD92.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 611902 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000017-00E9-006F-DC29-854D55A44DD8.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 611904 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000012-004D-00A2-2FA3-09434C8FC251.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612022 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 0000007C-0033-0058-66B0-2E4579AE5A2F.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612082 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000A2-00E6-0006-3EE6-BC46D382B56C.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 611900 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 0000001E-0032-0085-A497-6244D7A3ABAE.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612022 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000016-0044-00D4-4EA8-B54E9EB2BDFF.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 611900 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: GUID-1.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612152 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 0000003F-0081-0075-E8FF-1743C797E82E.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612150 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000069-0009-000A-3AD4-5F46E5B78738.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612204 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000E3-00EC-002A-281C-F54950BD8E78.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612218 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================
+
+
+================ NEW REQUEST ================
+Method: POST
+Remote Addr: 169.254.186.105
+Content-Type: application/octet-stream
+Content-Length: None
+
+=== HEADERS ===
+Host: 169.254.138.120:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000071-0066-00E1-9EA7-5A4F6EAB40FF.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+
+=== RAW BODY ===
+Raw size: 612370 bytes
+First 64 bytes (hex): 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+============== END REQUEST ==================

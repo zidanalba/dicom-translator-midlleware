@@ -72,3 +72,102 @@ Size: 762250 bytes
 📝 Extracted PDF saved to: ./results\000000D5-00CF-00C8-9F58-CF4BC6AEC974.pdf
 📝 Extracted PDF saved to: ./results\000000E1-00E9-00FC-68D4-BE4AFB890D2B.pdf
 Upload Error: [Errno 2] No such file or directory: './logs\\request_debug.log'
+Upload Error: [Errno 2] No such file or directory: './logs\\request_debug.log'
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+
+
+=== New Request ===
+=== Incoming Headers ===
+Host: 192.168.34.38:8080
+Accept: */*
+Filename: test.xml
+Content-Type: application/xml
+========================
+Content-Type: application/xml
+Content-Length: None
+Received file: test.xml
+Saved to: ./results\test.xml
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+
+
+=== New Request ===
+=== Incoming Headers ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 00000019-0036-0007-8293-6F470EA92C75.dat
+Content-Type: application/octet-stream
+Expect: 100-continue
+========================
+Content-Type: application/octet-stream
+Content-Length: None
+Received file: 00000019-0036-0007-8293-6F470EA92C75.dat
+Saved to: ./results\00000019-0036-0007-8293-6F470EA92C75.dat
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+
+
+=== New Request ===
+=== Incoming Headers ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: GUID-2.dat
+Content-Type: application/octet-stream
+Expect: 100-continue
+========================
+Content-Type: application/octet-stream
+Content-Length: None
+Received file: GUID-2.dat
+Saved to: ./results\GUID-2.dat
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+
+
+=== New Request ===
+=== Incoming Headers ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000BF-00E2-0064-A9D5-7547948A69A0.dat
+Content-Type: application/octet-stream
+Expect: 100-continue
+========================
+Content-Type: application/octet-stream
+Content-Length: None
+Received file: 000000BF-00E2-0064-A9D5-7547948A69A0.dat
+Saved to: ./results\000000BF-00E2-0064-A9D5-7547948A69A0.dat
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+
+
+=== New Request ===
+=== Incoming Headers ===
+Host: 192.168.34.38:8080
+Accept: */*
+Filename: test.xml
+Content-Type: application/xml
+========================
+Content-Type: application/xml
+Content-Length: None
+Received file: test.xml
+Saved to: ./results\test.xml
+Upload Error: File is missing DICOM File Meta Information header or the 'DICM' prefix is missing from the header. Use force=True to force reading.
+
+
+=== New Request ===
+=== Incoming Headers ===
+Host: 192.168.34.38:8080
+Accept: */*
+Transfer-Encoding: chunked
+Filename: 000000CB-0050-0028-85F1-964022BA5459.dcm
+Content-Type: application/octet-stream
+Expect: 100-continue
+========================
+Content-Type: application/octet-stream
+Content-Length: None
+Received file: 000000CB-0050-0028-85F1-964022BA5459.dcm
+Saved to: ./results\000000CB-0050-0028-85F1-964022BA5459.dcm
+Upload Error: 'dataset' is encoded as explicit VR little endian but the file meta has a (0002,0010) Transfer Syntax UID of 'Implicit VR Little Endian' - please set an appropriate Transfer Syntax
